@@ -1,5 +1,4 @@
-<?php
-/**
+/*!
  * Base Like
  *
  * Copyright (c) 2015 Atelier Disko - All rights reserved.
@@ -14,26 +13,11 @@
  * You should have received a copy of the AD General Software
  * License. If not, see http://atelierdisko.de/licenses.
  */
+requirejs.config({
+  paths: {
+    'like': 'base-like/js/like',
+  },
+  shim: {}
+});
 
-namespace base_like\controllers;
 
-class LikesController extends \base_core\controllers\BaseController {
-
-	use \base_core\controllers\AdminIndexTrait;
-	use \base_core\controllers\AdminPublishTrait;
-
-	public function api_add() {
-		Likes::add($this->request->url);
-	}
-
-	public function api_view() {
-		$item = Likes::find('first', [
-			'conditions' => [
-				'is_published' => true,
-				'url' => $this->request->url
-			]
-		]);
-	}
-}
-
-?>

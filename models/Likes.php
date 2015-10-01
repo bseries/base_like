@@ -24,7 +24,8 @@ class Likes extends \base_core\models\Base {
 		'base_core\extensions\data\behavior\Searchable' => [
 			'fields' => [
 				'model',
-				'foreign_key'
+				'foreign_key',
+				'count'
 			]
 		]
 	];

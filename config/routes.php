@@ -15,25 +15,12 @@
  * License. If not, see http://atelierdisko.de/licenses.
  */
 
-namespace base_like\controllers;
+namespace base_like\config;
 
-class LikesController extends \base_core\controllers\BaseController {
-
-	use \base_core\controllers\AdminIndexTrait;
-	use \base_core\controllers\AdminPublishTrait;
-
-	public function api_add() {
-		Likes::add($this->request->url);
-	}
-
-	public function api_view() {
-		$item = Likes::find('first', [
-			'conditions' => [
-				'is_published' => true,
-				'url' => $this->request->url
-			]
-		]);
-	}
-}
+ClientRouter::provide('likes:view', [
+	'controller' => 'likes', 'library' => 'base_like',
+	'action' => 'view', 'api' => true,
+	'url' => '__URL__'
+]);
 
 ?>
