@@ -21,19 +21,6 @@ class LikesController extends \base_core\controllers\BaseController {
 
 	use \base_core\controllers\AdminIndexTrait;
 	use \base_core\controllers\AdminPublishTrait;
-
-	public function api_add() {
-		Likes::add($this->request->url);
-	}
-
-	public function api_view() {
-		$item = Likes::find('first', [
-			'conditions' => [
-				'is_published' => true,
-				'url' => $this->request->url
-			]
-		]);
-	}
 }
 
 ?>

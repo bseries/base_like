@@ -17,26 +17,44 @@
 
 namespace base_like\models;
 
-// Anonymous likes on arbitrary entities (via model/foreignKey).
+use InvalidArgumentException;
+
+// Class to enable non-safe anonymous likes on any entity
+// identifieable via model / foreign key.
+//
+// * Non-safe. Whoever really wants to game the count may do it. It is
+//   assumed that like count will not be used in critical places.
+//   This assumption simplifies backend logic. Else we would
+//   need to auth users and keep track of who liked what.
+//
+// * Because we don't need to auth, we can have anonymous likers.
+//
+// * URLs are universal, model/foreign key combinations are not.
+//   BUT we cannot easily map URLs back to their model for
+//   further calulations (i.e. top liked products).
+//
 class Likes extends \base_core\models\Base {
 
 	protected $_actsAs = [
 		'base_core\extensions\data\behavior\Searchable' => [
 			'fields' => [
 				'model',
-				'foreign_key',
 				'count'
 			]
 		]
 	];
 
-	// Adds a single like to given entity.
+	// Adds a single like to given entity, identified by model/foreign key
+	// combination.
 	//
 	// Does an "UPSERT", operates as atomic as possible. It is currently not
 	// possible to do this through lithium so we revert to raw SQL here.
 	// http://dev.mysql.com/doc/refman/5.1/en/insert-on-duplicate.html
 	public static function add($model, $foreignKey) {
-		$sql  = 'INSERT INTO `likes` (`id`, `model`, `foreign_key`, `count`, `is_published`) ';
+		if (!$model || !$foreignKey) {
+			throw new InvalidArgumentException('No model or foreign key given.');
+		}
+		$sql  = 'INSERT INTO `likes` (`id`, `model`, `foreignKey`, `count`, `is_published`) ';
 		$sql .= 'VALUES (NULL, :model, :foreignKey, 1, 0) ';
 		$sql .= 'ON DUPLICATE KEY UPDATE `count` = `count` + 1';
 
@@ -49,13 +67,13 @@ var_dump($result);
 		return $result;
 	}
 
-	// Returns the entitey that's been liked.
-	public function liked($entity) {
+	// Retrieve a polymorphic relationship.
+	public function poly($entity) {
 		$model = $entity->model;
 
 		return $model::find('first', [
 			'conditions' => [
-				'id' => $entity->foreign_key
+				'id' => $entity->foreign_key,
 			]
 		]);
 	}
