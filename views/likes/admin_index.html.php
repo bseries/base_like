@@ -30,7 +30,6 @@ $this->set([
 		<table>
 			<thead>
 				<tr>
-					<td data-sort="is-published" class="flag is-published table-sort"><?= $t('publ.?') ?>
 					<td class="title"><?= $t('Title') ?>
 					<td class="actions">
 						<?= $this->form->field('search', [
@@ -44,15 +43,13 @@ $this->set([
 			<tbody>
 				<?php foreach ($data as $item): ?>
 				<tr>
-					<td class="flag is-published"><i class="material-icons"><?= ($item->is_published ? 'done' : '') ?></i>
 					<td class="title">
-						<?php if ($liked = $item->liked()): ?>
+						<?php if ($liked = $item->poly()): ?>
 							<?= $liked->title ?: $liked->name ?>
 						<?php else: ?>
 							?
 						<?php endif ?>
 					<td class="actions">
-						<?= $this->html->link($item->is_published ? $t('unpublish') : $t('publish'), ['id' => $item->id, 'action' => $item->is_published ? 'unpublish': 'publish', 'library' => 'base_like'], ['class' => 'button']) ?>
 				<?php endforeach ?>
 			</tbody>
 		</table>

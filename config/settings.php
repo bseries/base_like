@@ -15,11 +15,14 @@
  * License. If not, see http://atelierdisko.de/licenses.
  */
 
-namespace base_like\controllers;
+namespace base_like\config;
 
-class LikesController extends \base_core\controllers\BaseController {
+use base_core\extensions\cms\Settings;
 
-	use \base_core\controllers\AdminIndexTrait;
-}
+// Allows to seed newly created likes. Can either
+// be a fixed integer or an array with two integers
+// which will be used as the random range. By default
+// disabled using `false`.
+Settings::register('likes.seed', false);
 
 ?>
