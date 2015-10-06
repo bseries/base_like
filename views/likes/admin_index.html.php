@@ -31,6 +31,8 @@ $this->set([
 			<thead>
 				<tr>
 					<td class="title"><?= $t('Title') ?>
+					<td data-sort="count-real" class="number table-sort" title="<?= $t('R = real, F = fake') ?>">
+						<?= $t('Count (R/F)') ?>
 					<td class="actions">
 						<?= $this->form->field('search', [
 							'type' => 'search',
@@ -49,6 +51,10 @@ $this->set([
 						<?php else: ?>
 							?
 						<?php endif ?>
+					<td class="emphasize number">
+						<span><?= $item->count('real') ?></span>
+						/
+						<span class="minor"><?= $item->count('fake') ?></span>
 					<td class="actions">
 				<?php endforeach ?>
 			</tbody>

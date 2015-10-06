@@ -21,6 +21,7 @@ use Exception;
 use InvalidArgumentException;
 use base_core\extensions\cms\Settings;
 use lithium\util\Inflector;
+use lithium\core\Libraries;
 
 // Class to enable non-safe anonymous likes on any entity
 // identifieable via model / foreign key.
@@ -36,6 +37,8 @@ use lithium\util\Inflector;
 //   BUT we cannot easily map URLs back to their model for
 //   further calulations (i.e. top liked products).
 //
+// Allows to pre-seed likes with an arbitrary amount.
+//
 class Likes extends \base_core\models\Base {
 
 	protected $_actsAs = [
@@ -43,7 +46,7 @@ class Likes extends \base_core\models\Base {
 			'fields' => [
 				'model',
 				'foreign_key',
-				'count'
+				'count_real'
 			]
 		]
 	];
@@ -58,7 +61,6 @@ class Likes extends \base_core\models\Base {
 		if (!$model || !$foreignKey) {
 			throw new InvalidArgumentException('No model or foreign key given.');
 		}
-		$model = Inflector::camelize($model); // convert product-groups into ProductGroups
 
 		$sql  = 'INSERT INTO `likes` (`id`, `model`, `foreign_key`, `count_real`, `count_seed`) ';
 		$sql .= 'VALUES (NULL, :model, :foreignKey, 0, :countSeed) ';
@@ -66,15 +68,26 @@ class Likes extends \base_core\models\Base {
 
 		$stmnt  = static::pdo()->prepare($sql);
 		$result = $stmnt->execute([
-			'model' => $model,
+			'model' => static::_model($model),
 			'foreignKey' => $foreignKey,
 			'countSeed' => static::_seed()
 		]);
 		return $result;
 	}
 
+	// Normalizes model parameter to fully namespaced one.
+	protected static function _model($model) {
+		// Convert product-groups into ProductGroups.
+		$model   = ucfirst(Inflector::camelize($model));
+
+		// Will have no leading backslash.
+		$located = Libraries::locate('models', $model);
+
+		return $located ?: $model;
+	}
+
 	protected static function _seed() {
-		if (($seed = Settings::read('like.seed') === false)) {
+		if (($seed = Settings::read('like.seed')) === false) {
 			return 0;
 		}
 		if (is_array($seed) && count($seed) === 2) {
@@ -89,14 +102,14 @@ class Likes extends \base_core\models\Base {
 	public static function get($model, $foreignKey) {
 		$item = Likes::find('first', [
 			'conditions' => [
-				'model' => $model,
+				'model' => static::_model($model),
 				'foreign_key' => $foreignKey
 			]
 		]);
 
 		if (!$item) {
 			$item = Likes::create([
-				'model' => $model,
+				'model' => static::_model($model),
 				'foreign_key' => $foreignKey,
 				'count_real' => 0,
 				'count_seed' => static::_seed()
@@ -107,15 +120,24 @@ class Likes extends \base_core\models\Base {
 		}
 		return static::create([
 			'id' => $item->id,
-			'count' => $item->count(),
+			'count' => $item->count('virtual'),
 			// Do not expose fake data mechanics.
 			// 'count_real' => $item->count_real,
 			// 'count_seed' => $item->count_seed
 		], ['exists' => true]);
 	}
 
-	public function count($entity) {
-		return $entity->count_real + $entity->count_seed;
+	public function count($entity, $type) {
+		if ($type === 'real') {
+			return $entity->count_real;
+		}
+		if ($type === 'fake') {
+			return $entity->count_seed;
+		}
+		if ($type === 'virtual') {
+			return $entity->count_real + $entity->count_seed;
+		}
+		throw new InvalidArgumentException("Invalid count type `{$type}` given.");
 	}
 
 	// Retrieve a polymorphic relationship.
