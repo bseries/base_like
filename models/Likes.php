@@ -22,6 +22,7 @@ use InvalidArgumentException;
 use base_core\extensions\cms\Settings;
 use lithium\util\Inflector;
 use lithium\core\Libraries;
+use lithium\data\Entity;
 
 // Class to enable non-safe anonymous likes on any entity
 // identifieable via model / foreign key.
@@ -118,13 +119,11 @@ class Likes extends \base_core\models\Base {
 				return false;
 			}
 		}
-		return static::create([
-			'id' => $item->id,
-			'count' => $item->count('virtual'),
+		return new Entity(['data' => [
 			// Do not expose fake data mechanics.
-			// 'count_real' => $item->count_real,
-			// 'count_seed' => $item->count_seed
-		], ['exists' => true]);
+			// 'id' => $item->id,
+			'count' => $item->count('virtual')
+		]]);
 	}
 
 	public function count($entity, $type) {
