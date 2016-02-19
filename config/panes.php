@@ -22,7 +22,7 @@ use base_core\extensions\cms\Panes;
 
 extract(Message::aliases());
 
-Panes::register('external.likes', [
+Panes::register('base.likes', [
 	'title' => $t('Likes', ['scope' => 'base_like']),
 	'url' => ['controller' => 'likes', 'action' => 'index', 'library' => 'base_like', 'admin' => true],
 	'weight' => 70
