@@ -30,9 +30,12 @@ $this->set([
 		<table>
 			<thead>
 				<tr>
+					<td data-sort="User.number" class="user table-sort"><?= $t('User') ?>
+					<td class="media">
 					<td class="title"><?= $t('Title') ?>
 					<td data-sort="count-real" class="table-sort" title="<?= $t('R = real, F = fake') ?>">
 						<?= $t('Count (R/F)') ?>
+					<td data-sort="created" class="date created table-sort desc"><?= $t('Created') ?>
 					<td class="actions">
 						<?= $this->form->field('search', [
 							'type' => 'search',
@@ -44,9 +47,18 @@ $this->set([
 			</thead>
 			<tbody>
 				<?php foreach ($data as $item): ?>
+					<?php $liked = $item->poly() ?>
 				<tr>
+					<td class="user">
+						<?= $this->user->link($item->user()) ?>
+					<td class="media">
+						<?php if ($liked && $liked->respondsTo('cover') && ($cover = $liked->cover())): ?>
+							<?= $this->media->image($cover->version('fix3admin'), [
+								'data-media-id' => $cover->id, 'alt' => 'preview'
+							]) ?>
+						<?php endif ?>
 					<td class="title">
-						<?php if ($liked = $item->poly()): ?>
+						<?php if ($liked): ?>
 							<?= $liked->title ?: $liked->name ?>
 						<?php else: ?>
 							?
@@ -55,6 +67,10 @@ $this->set([
 						<span><?= $item->count('real') ?></span>
 						/
 						<span class="minor"><?= $item->count('fake') ?></span>
+					<td class="date created">
+						<time datetime="<?= $this->date->format($item->created, 'w3c') ?>">
+							<?= $this->date->format($item->created, 'date') ?>
+						</time>
 					<td class="actions">
 				<?php endforeach ?>
 			</tbody>

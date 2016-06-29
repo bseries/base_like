@@ -43,10 +43,12 @@ use lithium\data\Entity;
 class Likes extends \base_core\models\Base {
 
 	protected $_actsAs = [
+		'base_core\extensions\data\behavior\RelationsPlus',
+		'base_core\extensions\data\behavior\Timestamp',
 		'base_core\extensions\data\behavior\Searchable' => [
 			'fields' => [
+				'created',
 				'model',
-				'foreign_key',
 				'count_real',
 				'User.name',
 				'User.number'
@@ -218,11 +220,15 @@ Likes::applyFilter('save', function($self, $params, $chain) use ($normalizeModel
 		$entity->model = $normalizeModel($entity->model);
 	}
 
-	// Lazily update all session ids to augment user_id.
+	// Lazily update all session ids to augment user_id. In both directions.
 	if ($entity->session_key && $entity->user_id) {
 		Likes::update(
-			['session_key' => $entity->session_key, 'user_id' => $entity->user_id],
+			['user_id' => $entity->user_id],
 			['session_key' => $entity->session_key]
+		);
+		Likes::update(
+			['session_key' => $entity->session_key],
+			['user_id' => $entity->user_id]
 		);
 	}
 	return $chain->next($self, $params, $chain);
