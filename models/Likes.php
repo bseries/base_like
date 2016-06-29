@@ -217,18 +217,26 @@ Likes::applyFilter('save', function($self, $params, $chain) use ($normalizeModel
 	if ($entity->model) {
 		$entity->model = $normalizeModel($entity->model);
 	}
+
+	// Lazily update all session ids to augment user_id.
+	if ($entity->session_key && $entity->user_id) {
+		Likes::update(
+			['session_key' => $entity->session_key, 'user_id' => $entity->user_id],
+			['session_key' => $entity->session_key]
+		);
+	}
 	return $chain->next($self, $params, $chain);
 });
 Likes::applyFilter('find', function($self, $params, $chain) use ($normalizeModel) {
-	if (isset($params['options']['conditions']['model'])) {
-		$params['options']['conditions']['model'] = $normalizeModel(
-			$params['options']['conditions']['model']
-		);
+	$conditions =& $params['options']['conditions'];
+
+	if (isset($conditions['model'])) {
+		$conditions['model'] = $normalizeModel($conditions['model']);
 	}
-	if (!empty($params['options']['conditions']['user_id'])) {
-		unset($params['options']['conditions']['session_key']);
-	} elseif (!empty($params['options']['conditions']['session_key'])) {
-		unset($params['options']['conditions']['user_id']);
+	if (!empty($conditions['user_id'])) {
+		unset($conditions['session_key']);
+	} elseif (!empty($conditions['session_key'])) {
+		unset($conditions['user_id']);
 	}
 	return $chain->next($self, $params, $chain);
 });
