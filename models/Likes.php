@@ -29,10 +29,10 @@ use lithium\data\Entity;
 //
 // * Non-safe. Whoever really wants to game the count may do it. It is
 //   assumed that like count will not be used in critical places.
-//   This assumption simplifies backend logic. Else we would
-//   need to auth users and keep track of who liked what.
+//   This assumption simplifies backend logic.
 //
 // * Because we don't need to auth, we can have anonymous likers.
+//   (user_id is optional)
 //
 // * URLs are universal, model/foreign key combinations are not.
 //   BUT we cannot easily map URLs back to their model for
@@ -47,47 +47,97 @@ class Likes extends \base_core\models\Base {
 			'fields' => [
 				'model',
 				'foreign_key',
-				'count_real'
+				'count_real',
+				'User.name',
+				'User.number'
 			]
 		]
 	];
 
-	// Adds a single like to given entity, identified by model/foreign key
+	public $belongsTo = [
+		'User' => [
+			'to' => 'base_core\models\Users',
+			'key' => 'user_id'
+		]
+	];
+
+	public static function init() {
+		static::finder('grouped', function($self, $params, $chain) {
+			if (is_array($params['options']['conditions']['foreign_key'])) {
+				$type = 'all';
+			} else {
+				$type = 'first';
+			}
+			return static::find($type, [
+				'conditions' => $params['options']['conditions'],
+				'fields' => [
+					'model',
+					'foreign_key',
+					'SUM(count_real) AS count_real',
+					'SUM(count_seed) AS count_seed'
+				],
+				'group' => ['model', 'foreign_key']
+			]);
+		});
+	}
+
+	// Adds a single real like to given entity, identified by model/foreign key
 	// combination.
-	//
-	// Does an "UPSERT", operates as atomic as possible. It is currently not
-	// possible to do this through lithium so we revert to raw SQL here.
-	// http://dev.mysql.com/doc/refman/5.1/en/insert-on-duplicate.html
-	public static function add($model, $foreignKey) {
-		if (!$model || !$foreignKey) {
-			throw new InvalidArgumentException('No model or foreign key given.');
+	public static function add($model, $foreignKey, $userId, $sessionKey) {
+		if (!$userId && !$sessionKey) {
+			throw new InvalidArgumentException('No user id or session key given.');
 		}
+		$conditions = [
+			'model' => $model,
+			'foreign_key' => $foreignKey,
+			'user_id' => $userId,
+			'session_key' => $sessionKey
+		];
+		if (static::find('count', compact('conditions'))) {
+			return false;
+		}
+		return static::create($conditions + [
+			'count_real' => 1
+		])->save();
+	}
 
-		$sql  = 'INSERT INTO `likes` (`id`, `model`, `foreign_key`, `count_real`, `count_seed`) ';
-		$sql .= 'VALUES (NULL, :model, :foreignKey, 0, :countSeed) ';
-		$sql .= 'ON DUPLICATE KEY UPDATE `count_real` = `count_real` + 1';
+	public static function get($model, $foreignKey, $userId, $sessionKey) {
+		if (!$userId && !$sessionKey) {
+			throw new InvalidArgumentException('No user id or session key given.');
+		}
+		$conditions = [
+			'model' => $model,
+			'foreign_key' => $foreignKey,
+			'user_id' => $userId,
+			'session_key' => $sessionKey
+		];
+		return static::find('first', compact('conditions'));
+	}
 
-		$stmnt  = static::pdo()->prepare($sql);
-		$result = $stmnt->execute([
-			'model' => static::_model($model),
-			'foreignKey' => $foreignKey,
-			'countSeed' => static::_seed()
+	// Returns `true` if seed happened, `null` if there is nothing to seed, `false`
+	// if seeding failed.
+	public static function seed($model, $foreignKey) {
+		$isInitialized = static::find('count', [
+			'conditions' => [
+				'model' => $model,
+				'foreign_key' => $foreignKey
+			]
 		]);
-		return $result;
+		if ($isInitialized) {
+			return null;
+		}
+		$item = static::create([
+			'user_id' => null,
+			'session_key' => null,
+			'model' => $model,
+			'foreign_key' => $foreignKey,
+			'count_real' => 0,
+			'count_seed' => static::_seedCount()
+		]);
+		return $item->save();
 	}
 
-	// Normalizes model parameter to fully namespaced one.
-	protected static function _model($model) {
-		// Convert product-groups into ProductGroups.
-		$model   = ucfirst(Inflector::camelize($model));
-
-		// Will have no leading backslash.
-		$located = Libraries::locate('models', $model);
-
-		return $located ?: $model;
-	}
-
-	protected static function _seed() {
+	protected static function _seedCount() {
 		if (($seed = Settings::read('like.seed')) === false) {
 			return 0;
 		}
@@ -99,44 +149,34 @@ class Likes extends \base_core\models\Base {
 		throw new Exception('Invalid seed.');
 	}
 
-	// Will auto initialize a record, when it didn't exist. Returns the like count.
-	public static function get($model, $foreignKey) {
-		$item = Likes::find('first', [
-			'conditions' => [
-				'model' => static::_model($model),
-				'foreign_key' => $foreignKey
-			]
-		]);
-
-		if (!$item) {
-			$item = Likes::create([
-				'model' => static::_model($model),
-				'foreign_key' => $foreignKey,
-				'count_real' => 0,
-				'count_seed' => static::_seed()
-			]);
-			if (!$item->save()) {
-				return false;
-			}
+	public function count($entity, $type) {
+		switch ($type) {
+			case 'real':
+				return $entity->count_real;
+			case 'fake':
+				return $entity->count_seed;
+			case 'virtual':
+				return $entity->count_real + $entity->count_seed;
+			break;
+			default:
+				throw new InvalidArgumentException("Invalid count type `{$type}` given.");
 		}
-		return new Entity(['data' => [
-			// Do not expose fake data mechanics.
-			// 'id' => $item->id,
-			'count' => $item->count('virtual')
-		]]);
 	}
 
-	public function count($entity, $type) {
-		if ($type === 'real') {
-			return $entity->count_real;
+	public function hasGiven($entity, $userId, $sessionKey) {
+		if (!$userId && !$sessionKey) {
+			throw new InvalidArgumentException('No user id or session key given.');
 		}
-		if ($type === 'fake') {
-			return $entity->count_seed;
+		$conditions = [
+			'model' => $entity->model,
+			'foreign_key' => $entity->foreign_key
+		];
+		if ($userId) {
+			$conditions['user_id'] = $userId;
+		} else {
+			$conditions['session_key'] = $sessionKey;
 		}
-		if ($type === 'virtual') {
-			return $entity->count_real + $entity->count_seed;
-		}
-		throw new InvalidArgumentException("Invalid count type `{$type}` given.");
+		return (boolean) static::find('count', compact('conditions'));
 	}
 
 	// Retrieve a polymorphic relationship.
@@ -150,5 +190,47 @@ class Likes extends \base_core\models\Base {
 		]);
 	}
 }
+
+Likes::init();
+
+// Normalizes model parameter to fully namespaced one.
+// idempotent
+$normalizeModel = function($model) {
+	if (strpos($model, '\\') !== false) {
+		return $model;
+	}
+	// Convert product-groups into ProductGroups.
+	$model = ucfirst(Inflector::camelize($model));
+
+	// Will have no leading backslash.
+	$located = Libraries::locate('models', $model);
+
+	return $located ?: $model;
+};
+Likes::applyFilter('save', function($self, $params, $chain) use ($normalizeModel) {
+	$entity = $params['entity'];
+	$data =& $params['data'];
+
+	if (isset($data['model'])) {
+		$data['model'] = $normalizeModel($data['model']);
+	}
+	if ($entity->model) {
+		$entity->model = $normalizeModel($entity->model);
+	}
+	return $chain->next($self, $params, $chain);
+});
+Likes::applyFilter('find', function($self, $params, $chain) use ($normalizeModel) {
+	if (isset($params['options']['conditions']['model'])) {
+		$params['options']['conditions']['model'] = $normalizeModel(
+			$params['options']['conditions']['model']
+		);
+	}
+	if (!empty($params['options']['conditions']['user_id'])) {
+		unset($params['options']['conditions']['session_key']);
+	} elseif (!empty($params['options']['conditions']['session_key'])) {
+		unset($params['options']['conditions']['user_id']);
+	}
+	return $chain->next($self, $params, $chain);
+});
 
 ?>
