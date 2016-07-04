@@ -6,7 +6,6 @@ $t = function($message, array $options = []) {
 	return Message::translate($message, $options + ['scope' => 'base_like', 'default' => $message]);
 };
 
-
 $this->set([
 	'page' => [
 		'type' => 'multiple',
@@ -31,6 +30,7 @@ $this->set([
 			<thead>
 				<tr>
 					<td data-sort="User.number" class="user table-sort"><?= $t('User') ?>
+					<td><?= $t('Type') ?>
 					<td class="media">
 					<td class="title"><?= $t('Title') ?>
 					<td data-sort="count-real" class="table-sort" title="<?= $t('R = real, F = fake') ?>">
@@ -51,6 +51,7 @@ $this->set([
 				<tr>
 					<td class="user">
 						<?= $this->user->link($item->user()) ?>
+					<td><?= $item->polyType() ?>
 					<td class="media">
 						<?php if ($liked && $liked->respondsTo('cover') && ($cover = $liked->cover())): ?>
 							<?= $this->media->image($cover->version('fix3admin'), [
@@ -59,7 +60,7 @@ $this->set([
 						<?php endif ?>
 					<td class="title">
 						<?php if ($liked): ?>
-							<?= $liked->title ?: $liked->name ?>
+							<?= $liked->title() ?>
 						<?php else: ?>
 							?
 						<?php endif ?>
@@ -72,6 +73,9 @@ $this->set([
 							<?= $this->date->format($item->created, 'date') ?>
 						</time>
 					<td class="actions">
+						<?php if ($url = $item->polyUrl($this->_request, ['action' => 'edit'])): ?>
+							<?= $this->html->link($t('open'), $url, ['class' => 'button']) ?>
+						<?php endif ?>
 				<?php endforeach ?>
 			</tbody>
 		</table>

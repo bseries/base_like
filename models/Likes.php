@@ -20,9 +20,7 @@ namespace base_like\models;
 use Exception;
 use InvalidArgumentException;
 use base_core\extensions\cms\Settings;
-use lithium\util\Inflector;
 use lithium\core\Libraries;
-use lithium\data\Entity;
 
 // Class to enable non-safe anonymous likes on any entity
 // identifieable via model / foreign key.
@@ -43,6 +41,7 @@ use lithium\data\Entity;
 class Likes extends \base_core\models\Base {
 
 	protected $_actsAs = [
+		'base_core\extensions\data\behavior\Polymorphic',
 		'base_core\extensions\data\behavior\RelationsPlus',
 		'base_core\extensions\data\behavior\Timestamp',
 		'base_core\extensions\data\behavior\Searchable' => [
@@ -148,44 +147,12 @@ class Likes extends \base_core\models\Base {
 		return (boolean) static::find('count', compact('conditions'));
 	}
 
-	// Retrieve a polymorphic relationship.
-	public function poly($entity) {
-		$model = $entity->model;
-
-		return $model::find('first', [
-			'conditions' => [
-				'id' => $entity->foreign_key,
-			]
-		]);
-	}
 }
 
 Likes::init();
 
-// Normalizes model parameter to fully namespaced one.
-// idempotent
-$normalizeModel = function($model) {
-	if (strpos($model, '\\') !== false) {
-		return $model;
-	}
-	// Convert product-groups into ProductGroups.
-	$model = ucfirst(Inflector::camelize($model));
-
-	// Will have no leading backslash.
-	$located = Libraries::locate('models', $model);
-
-	return $located ?: $model;
-};
-Likes::applyFilter('save', function($self, $params, $chain) use ($normalizeModel) {
+Likes::applyFilter('save', function($self, $params, $chain) {
 	$entity = $params['entity'];
-	$data =& $params['data'];
-
-	if (isset($data['model'])) {
-		$data['model'] = $normalizeModel($data['model']);
-	}
-	if ($entity->model) {
-		$entity->model = $normalizeModel($entity->model);
-	}
 
 	// Lazily update all session ids to augment user_id. In both directions.
 	if ($entity->session_key && $entity->user_id) {
@@ -200,12 +167,9 @@ Likes::applyFilter('save', function($self, $params, $chain) use ($normalizeModel
 	}
 	return $chain->next($self, $params, $chain);
 });
-Likes::applyFilter('find', function($self, $params, $chain) use ($normalizeModel) {
+Likes::applyFilter('find', function($self, $params, $chain) {
 	$conditions =& $params['options']['conditions'];
 
-	if (isset($conditions['model'])) {
-		$conditions['model'] = $normalizeModel($conditions['model']);
-	}
 	if (!empty($conditions['user_id'])) {
 		unset($conditions['session_key']);
 	} elseif (!empty($conditions['session_key'])) {
