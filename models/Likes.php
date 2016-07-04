@@ -83,39 +83,6 @@ class Likes extends \base_core\models\Base {
 		});
 	}
 
-	// Adds a single real like to given entity, identified by model/foreign key
-	// combination.
-	public static function add($model, $foreignKey, $userId, $sessionKey) {
-		if (!$userId && !$sessionKey) {
-			throw new InvalidArgumentException('No user id or session key given.');
-		}
-		$conditions = [
-			'model' => $model,
-			'foreign_key' => $foreignKey,
-			'user_id' => $userId,
-			'session_key' => $sessionKey
-		];
-		if (static::find('count', compact('conditions'))) {
-			return false;
-		}
-		return static::create($conditions + [
-			'count_real' => 1
-		])->save();
-	}
-
-	public static function get($model, $foreignKey, $userId, $sessionKey) {
-		if (!$userId && !$sessionKey) {
-			throw new InvalidArgumentException('No user id or session key given.');
-		}
-		$conditions = [
-			'model' => $model,
-			'foreign_key' => $foreignKey,
-			'user_id' => $userId,
-			'session_key' => $sessionKey
-		];
-		return static::find('first', compact('conditions'));
-	}
-
 	// Returns `true` if seed happened, `null` if there is nothing to seed, `false`
 	// if seeding failed.
 	public static function seed($model, $foreignKey) {
