@@ -51,11 +51,14 @@ Widgets::register('likedTopTen', function() use ($t) {
 		'limit' => 10,
 		'conditions' => [
 			'YEAR(created)' => (object) 'YEAR(NOW())',
-			'MONTH(created)' => (object) 'MONTH(NOW())',
+			'MONTH(created)' => (object) 'MONTH(NOW()) - 1',
 		],
 		'group' => ['model', 'foreign_key'],
+		'fields' => [
+			'model', 'foreign_key', 'SUM(count_real) AS total_count_real'
+		],
 		'order' => [
-			'SUM(count_real)' => 'DESC'
+			'total_count_real' => 'DESC'
 		],
 	]);
 	$data = [];
@@ -63,7 +66,7 @@ Widgets::register('likedTopTen', function() use ($t) {
 		if (!$poly = $result->poly()) {
 			continue;
 		}
-		$data[$poly->title()] = $result->count('real');
+		$data[$poly->title()] = $result->total_count_real;
 	}
 	return [
 		'title' => $t('This month most liked Things'),
