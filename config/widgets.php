@@ -59,7 +59,7 @@ Widgets::register('likedTopTen', function() use ($t) {
 		$data[$poly->title()] = $result->count('real');
 	}
 	return [
-		'title' => $t('Top 10 of most liked Things'),
+		'title' => $t('Top 10 most liked Things'),
 		'data' => $data,
 		'url' => [
 			'library' => 'base_like',
