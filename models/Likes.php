@@ -63,13 +63,8 @@ class Likes extends \base_core\models\Base {
 	];
 
 	public static function init() {
-		static::finder('grouped', function($self, $params, $chain) {
-			if (is_array($params['options']['conditions']['foreign_key'])) {
-				$type = 'all';
-			} else {
-				$type = 'first';
-			}
-			return static::find($type, [
+		static::finder('firstGrouped', function($self, $params, $chain) {
+			return static::find('first', [
 				'conditions' => $params['options']['conditions'],
 				'fields' => [
 					'model',
@@ -78,15 +73,34 @@ class Likes extends \base_core\models\Base {
 					'SUM(count_seed) AS count_seed'
 				],
 				'group' => ['model', 'foreign_key']
-			]);
+			] + $params['options']);
+		});
+		static::finder('allGrouped', function($self, $params, $chain) {
+			return static::find('all', [
+				'conditions' => $params['options']['conditions'],
+				'fields' => [
+					'model',
+					'foreign_key',
+					'SUM(count_real) AS count_real',
+					'SUM(count_seed) AS count_seed'
+				],
+				'group' => ['model', 'foreign_key']
+			] + $params['options']);
 		});
 	}
 
 	// Adds a single real like to given entity, identified by model/foreign key
 	// combination.
-	public static function add($model, $foreignKey, $userId, $sessionKey) {
+	public static function add($model, $foreignKey, $userId, $sessionKey, array $options = []) {
 		if (!$userId && !$sessionKey) {
 			throw new InvalidArgumentException('No user id or session key given.');
+		}
+		$options += ['seed' => false];
+
+		if ($options['seed']) {
+			if (static::seed($model, $foreignKey) === false) {
+				return false;
+			}
 		}
 		$conditions = [
 			'model' => $model,
@@ -95,11 +109,15 @@ class Likes extends \base_core\models\Base {
 			'session_key' => $sessionKey
 		];
 		if (static::find('count', compact('conditions'))) {
-			return false;
+			return null;
 		}
-		return static::create($conditions + [
+		$item = static::create($conditions + [
 			'count_real' => 1
-		])->save();
+		]);
+		if ($item->save()) {
+			return $item;
+		}
+		return false;
 	}
 
 	public static function get($model, $foreignKey, $userId, $sessionKey, array $options = []) {
@@ -117,7 +135,7 @@ class Likes extends \base_core\models\Base {
 			'model' => $model,
 			'foreign_key' => $foreignKey
 		];
-		$result = static::find('grouped', compact('conditions'));
+		$result = static::find('firstGrouped', compact('conditions'));
 
 		if (!$result) {
 			return [
