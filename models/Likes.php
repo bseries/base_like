@@ -106,7 +106,7 @@ class Likes extends \base_core\models\Base {
 		if (!$userId && !$sessionKey) {
 			throw new InvalidArgumentException('No user id or session key given.');
 		}
-		$options = ['seed' => false];
+		$options += ['seed' => false];
 
 		if ($options['seed']) {
 			if (static::seed($model, $foreignKey) === false) {
