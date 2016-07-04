@@ -220,7 +220,6 @@ class Likes extends \base_core\models\Base {
 		}
 		return (boolean) static::find('count', compact('conditions'));
 	}
-
 }
 
 Likes::init();

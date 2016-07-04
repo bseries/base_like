@@ -47,9 +47,16 @@ Widgets::register('liked',  function() use ($t) {
 ]);
 
 Widgets::register('likedTopTen', function() use ($t) {
-	$results = Likes::find('allGrouped', [
-		'order' => ['SUM(count_real)' => 'DESC'],
-		'limit' => 10
+	$results = Likes::find('all', [
+		'limit' => 10,
+		'conditions' => [
+			'YEAR(created)' => (object) 'YEAR(NOW())',
+			'MONTH(created)' => (object) 'MONTH(NOW())',
+		],
+		'group' => ['model', 'foreign_key'],
+		'order' => [
+			'SUM(count_real)' => 'DESC'
+		],
 	]);
 	$data = [];
 	foreach ($results as $result) {
@@ -59,7 +66,7 @@ Widgets::register('likedTopTen', function() use ($t) {
 		$data[$poly->title()] = $result->count('real');
 	}
 	return [
-		'title' => $t('Top 10 most liked Things'),
+		'title' => $t('This month most liked Things'),
 		'data' => $data,
 		'url' => [
 			'library' => 'base_like',
