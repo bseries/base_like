@@ -109,6 +109,8 @@ class Likes extends \base_core\models\Base {
 			'session_key' => $sessionKey
 		];
 		if (static::find('count', compact('conditions'))) {
+			// User already liked the entity, not an error
+			// condition per se, but we should not get here.
 			return null;
 		}
 		$item = static::create($conditions + [
