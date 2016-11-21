@@ -14,7 +14,7 @@
         "php": ">=5.5.0",
         "atelierdisko/base_core": "1.4.*",
         "atelierdisko/jsend": "1.0.*",
-        "unionofrad/lithium": "1.0.*@dev",
+        "unionofrad/lithium": "1.1.*@dev",
         "composer/installers": "1.*@stable"
     },
     "repositories": [
