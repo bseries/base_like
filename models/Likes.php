@@ -46,11 +46,11 @@ class Likes extends \base_core\models\Base {
 		'base_core\extensions\data\behavior\Timestamp',
 		'base_core\extensions\data\behavior\Searchable' => [
 			'fields' => [
+				'User.name',
+				'User.number',
 				'created',
 				'model',
-				'count_real',
-				'User.name',
-				'User.number'
+				'count_real'
 			]
 		]
 	];

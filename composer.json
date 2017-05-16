@@ -18,6 +18,6 @@
         "composer/installers": "1.*@stable"
     },
     "repositories": [
-      { "type": "vcs", "url": "git@code.atelierdisko.de:base_core" }
+      { "type": "vcs", "url": "git@code.disko.io:base_core" }
     ]
 }
