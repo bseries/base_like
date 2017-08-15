@@ -24,10 +24,11 @@ use base_like\models\Likes;
 extract(Message::aliases());
 
 Widgets::register('liked',  function() use ($t) {
-	$things = Likes::find('count', [
-		'conditions' => [],
-		'group' => ['model', 'foreign_key']
+	$things = Likes::find('first', [
+		'fields' => ['COUNT(DISTINCT(CONCAT(model, foreign_key)))']
 	]);
+	$things = $things ? current($things->data()) : 0;
+
 	$likes = Likes::find('first', [
 		'fields' => [
 			'SUM(count_real) AS count_real'
