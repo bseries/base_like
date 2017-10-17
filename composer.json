@@ -1,23 +1,13 @@
 {
-    "name": "atelierdisko/base_like",
+    "name": "bseries/base_like",
     "description": "Like functionality for Bento.",
-    "homepage": "https://atelierdisko.de",
     "type": "lithium-library",
-    "license": "proprietary",
-    "authors": [
-        {
-          "name": "Atelier Disko",
-          "homepage": "https://atelierdisko.de"
-        }
-    ],
+    "license": ["BSD-3-Clause"],
     "require": {
         "php": "^5.5 || ^7.0",
-        "atelierdisko/base_core": "1.5.*@dev",
+        "bseries/base_core": "1.5.*@dev",
         "atelierdisko/jsend": "1.0.*",
         "unionofrad/lithium": "^1.1",
         "composer/installers": "1.*@stable"
-    },
-    "repositories": [
-      { "type": "vcs", "url": "git@code.disko.io:base_core" }
-    ]
+    }
 }
