@@ -53,7 +53,7 @@ $this->set([
 						<?= $this->user->link($item->user()) ?>
 					<td><?= $item->polyType() ?>
 					<td class="media">
-						<?php if ($liked && method_exists($liked, 'cover') && ($cover = $liked->cover())): ?>
+						<?php if ($liked && $liked->cover_media_id && ($cover = $liked->cover())): ?>
 							<?= $this->media->image($cover->version('fix3admin'), [
 								'data-media-id' => $cover->id, 'alt' => 'preview'
 							]) ?>
