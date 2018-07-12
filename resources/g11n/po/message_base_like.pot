@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: base_like 1.0\n"
 "Report-Msgid-Bugs-To: info@atelierdisko.de\n"
-"POT-Creation-Date: 2016-04-08 12:48+0200\n"
+"POT-Creation-Date: 2018-07-12 12:51+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,38 +17,58 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: config/panes.php:26 config/widgets.php:31
+#: config/panes.php:18 config/widgets.php:34
 msgid "Likes"
 msgstr ""
 
-#: config/widgets.php:28
+#: config/widgets.php:31
 msgid "Liked"
 msgstr ""
 
-#: config/widgets.php:30
+#: config/widgets.php:33
 msgid "Things"
 msgstr ""
 
-#: views/likes/admin_index.html.php:13
+#: config/widgets.php:65
+msgid "This month most liked Things"
+msgstr ""
+
+#: views/likes/admin_index.html.php:12
 msgid "likes"
 msgstr ""
 
-#: views/likes/admin_index.html.php:33
-msgid "Title"
+#: views/likes/admin_index.html.php:32
+msgid "User"
 msgstr ""
 
-#: views/likes/admin_index.html.php:34
-msgid "R = real, F = fake"
+#: views/likes/admin_index.html.php:33
+msgid "Type"
 msgstr ""
 
 #: views/likes/admin_index.html.php:35
+msgid "Title"
+msgstr ""
+
+#: views/likes/admin_index.html.php:36
+msgid "R = real, F = fake"
+msgstr ""
+
+#: views/likes/admin_index.html.php:37
 msgid "Count (R/F)"
 msgstr ""
 
-#: views/likes/admin_index.html.php:40
+#: views/likes/admin_index.html.php:38
+msgid "Created"
+msgstr ""
+
+#: views/likes/admin_index.html.php:43
 msgid "Filter"
 msgstr ""
 
-#: views/likes/admin_index.html.php:63
+#: views/likes/admin_index.html.php:77
+msgid "open"
+msgstr ""
+
+#: views/likes/admin_index.html.php:83
 msgid "No items available, yet."
 msgstr ""
